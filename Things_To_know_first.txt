@@ -1,0 +1,49 @@
+** To get the psql in the cmd:
+
+-> Go and search for the postgresql address(C:\Program Files\PostgreSQL\17\bin),
+   add this in the environment variables->system variables->path->new->paste the path
+-> Now go to cmd and type "psql" and enter the password of the database(my password:postgres)
+-> if we want to change then, use this command(psql -U postgres) and set the new password, 
+   so after this again enter "psql" along with new password, it
+   will take us to system database('postgres'), then enter "\q"
+   to exit and you will be in ->C:\Users\HP>.
+-> Enter this command to enter our required database(psql -U postgres -d pl_data and enter password),
+   which I created manually in the pgAdmin4.
+-> And its time to copy the "prem_stats.csv" in the pl-data db,
+   but first create the table "player_statistic" using:
+    
+   CREATE TABLE player_statistic (
+    player_name VARCHAR(100),
+    nation VARCHAR(50),
+    position VARCHAR(50),
+    age INTEGER,
+    mp INTEGER,
+    starts INTEGER,
+    minutes_played FLOAT,
+    goals FLOAT,
+    assists FLOAT,
+    penalties_scored FLOAT,
+    yellow_cards FLOAT,
+    red_cards FLOAT,
+    expected_goals FLOAT,
+    expected_assists FLOAT,
+    team_name VARCHAR(100)
+     );
+
+
+-> next is to copy the .csv data into the database using command:
+   \COPY player_statistic FROM 'C:\Users\HP\IdeaProjects\FootBall_Project\prem_stats_cleaned.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF8';
+-> And you will see the output as : 607.
+
+
+Postgres Connection setup in the intellij:
+
+-> Go the top left menu->views->toolWindows->database.
+-> on the top right, we will get the applet database. then select "+" and then add postgresql.
+-> now enter username and password and the connecting database("pl_data") and then click necessary postgresql downloads below and then enter ok.
+-> the setup is done.
+
+
+
+-> At last run the backend and run the front end, they will connect automatically using
+   the CorsConfig.java file. That's it the project works bro........

@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PremierZone</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --purple:#38003c;--purple2:#560a5e;--green:#00ff85;--pink:#e90052;
+  --bg:#0d0d12;--s1:#161620;--s2:#1e1e2c;--s3:#252535;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+  --text:#eeeef5;--muted:#7777a0;--dim:#44445a;
+  --yellow:#f59e0b;--red:#ef4444;--blue:#3b82f6;
+  --r:10px;--rl:16px;--rxl:22px;
+}
+html{scroll-behavior:smooth}
+body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--s1)}
+::-webkit-scrollbar-thumb{background:var(--purple2);border-radius:3px}
+
+/* Animations */
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+@keyframes slideIn{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:translateX(0)}}
+@keyframes modalIn{from{opacity:0;transform:scale(.95) translateY(12px)}to{opacity:1;transform:scale(1) translateY(0)}}
+@keyframes toastIn{from{opacity:0;transform:translateX(100%)}to{opacity:1;transform:translateX(0)}}
+
+.fade-up{animation:fadeUp .4s ease both}
+.fade-up-1{animation:fadeUp .4s .05s ease both}
+.fade-up-2{animation:fadeUp .4s .1s ease both}
+.fade-up-3{animation:fadeUp .4s .15s ease both}
+.fade-up-4{animation:fadeUp .4s .2s ease both}
+
+/* Layout */
+.app{display:flex;flex-direction:column;min-height:100vh}
+
+/* Header */
+.header{
+  background:linear-gradient(135deg,var(--purple) 0%,#1c0030 100%);
+  border-bottom:1px solid rgba(0,255,133,0.15);
+  padding:0 1.5rem;height:60px;
+  display:flex;align-items:center;gap:12px;
+  position:sticky;top:0;z-index:100;
+}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:3px;color:#fff;line-height:1}
+.logo span{color:var(--green)}
+.header-divider{width:1px;height:24px;background:var(--border2);margin:0 4px}
+.header-season{font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:1px;color:rgba(255,255,255,.4);text-transform:uppercase}
+.header-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.status-pill{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);background:var(--s2);border:1px solid var(--border);border-radius:20px;padding:4px 10px}
+.status-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+.status-dot.offline{background:var(--red);animation:none}
+
+/* Nav tabs */
+.nav{background:var(--s1);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:0;padding:0 1.5rem;overflow-x:auto}
+.nav-tab{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;padding:12px 20px;color:var(--muted);border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap}
+.nav-tab:hover{color:var(--text)}
+.nav-tab.active{color:var(--green);border-bottom-color:var(--green)}
+
+/* Main */
+.main{flex:1;max-width:1500px;width:100%;margin:0 auto;padding:1.5rem}
+
+/* Stats strip */
+.stats-strip{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:1.5rem}
+@media(max-width:1100px){.stats-strip{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:600px){.stats-strip{grid-template-columns:repeat(2,1fr)}}
+.stat-tile{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:1rem 1.2rem;position:relative;overflow:hidden;transition:border-color .2s,transform .2s}
+.stat-tile:hover{border-color:var(--border2);transform:translateY(-2px)}
+.stat-tile::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--pink),var(--green))}
+.stat-val{font-family:'Bebas Neue',sans-serif;font-size:32px;color:var(--green);line-height:1}
+.stat-label{font-size:11px;color:var(--muted);margin-top:3px;text-transform:uppercase;letter-spacing:.5px}
+
+/* Toolbar */
+.toolbar{background:var(--s1);border:1px solid var(--border);border-radius:var(--rl);padding:1rem 1.25rem;display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:1rem}
+.search-wrap{position:relative;flex:1;min-width:160px}
+.search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:14px;pointer-events:none}
+.toolbar input,.toolbar select{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);font-family:'Barlow',sans-serif;font-size:13px;padding:8px 12px 8px 32px;outline:none;transition:border-color .2s}
+.toolbar select{padding-left:12px}
+.toolbar input:focus,.toolbar select:focus{border-color:var(--green)}
+.toolbar select option{background:#1e1e2c}
+.view-toggle{display:flex;gap:4px;background:var(--bg);border:1px solid var(--border2);border-radius:var(--r);padding:3px}
+.view-btn{background:none;border:none;color:var(--muted);cursor:pointer;padding:5px 8px;border-radius:7px;font-size:14px;transition:all .15s}
+.view-btn.active{background:var(--s2);color:var(--text)}
+.btn{font-family:'Barlow',sans-serif;font-size:13px;font-weight:500;padding:8px 16px;border-radius:var(--r);border:1px solid var(--border2);background:var(--s2);color:var(--text);cursor:pointer;transition:all .15s;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{background:var(--s3);border-color:var(--border2)}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--pink);border-color:var(--pink);color:#fff}
+.btn-primary:hover{background:#c0003f;border-color:#c0003f}
+.btn-ghost{background:transparent;border-color:var(--border);color:var(--muted)}
+.btn-ghost:hover{color:var(--text);border-color:var(--border2)}
+.result-count{font-size:12px;color:var(--dim);margin-left:auto}
+
+/* Cards Grid */
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+@media(max-width:480px){.cards-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}}
+
+.player-card{background:var(--s1);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;cursor:pointer;transition:all .2s;position:relative;animation:fadeUp .35s ease both}
+.player-card:hover{border-color:var(--border2);transform:translateY(-4px);box-shadow:0 12px 40px rgba(0,0,0,.4)}
+.player-card:hover .card-img{transform:scale(1.05)}
+
+.card-header{height:130px;position:relative;overflow:hidden;display:flex;align-items:flex-end;justify-content:center}
+.card-bg{position:absolute;inset:0;background:linear-gradient(135deg,var(--purple) 0%,var(--purple2) 100%)}
+.card-team-badge{position:absolute;top:10px;right:10px;width:32px;height:32px;border-radius:6px;object-fit:contain;background:rgba(255,255,255,.1);padding:3px}
+.card-team-badge-fallback{position:absolute;top:10px;right:10px;width:32px;height:32px;border-radius:6px;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:rgba(255,255,255,.6)}
+.card-img{width:100px;height:110px;object-fit:cover;object-position:top;position:relative;z-index:1;transition:transform .3s;filter:drop-shadow(0 -4px 20px rgba(0,0,0,.5))}
+.card-img-fallback{width:80px;height:80px;border-radius:50%;background:var(--s3);border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--muted);margin-bottom:8px;position:relative;z-index:1}
+.card-pos-bar{position:absolute;bottom:0;left:0;right:0;height:3px}
+.pos-bar-GK{background:var(--yellow)}
+.pos-bar-DF,.pos-bar-CB,.pos-bar-FB{background:#22c55e}
+.pos-bar-MF,.pos-bar-CM,.pos-bar-DM,.pos-bar-AM,.pos-bar-WM{background:#a855f7}
+.pos-bar-FW,.pos-bar-ST,.pos-bar-CF,.pos-bar-LW,.pos-bar-RW{background:var(--pink)}
+
+.card-body{padding:.85rem}
+.card-name{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;color:#fff;line-height:1.1;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card-meta{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:6px;margin-bottom:.75rem}
+.pos-chip{font-size:10px;font-weight:600;padding:1px 6px;border-radius:3px}
+.pos-chip-GK{background:rgba(245,158,11,.15);color:var(--yellow);border:1px solid rgba(245,158,11,.3)}
+.pos-chip-DF,.pos-chip-CB,.pos-chip-FB{background:rgba(34,197,94,.12);color:#4ade80;border:1px solid rgba(34,197,94,.25)}
+.pos-chip-MF,.pos-chip-CM,.pos-chip-DM,.pos-chip-AM,.pos-chip-WM{background:rgba(168,85,247,.15);color:#c084fc;border:1px solid rgba(168,85,247,.3)}
+.pos-chip-FW,.pos-chip-ST,.pos-chip-CF,.pos-chip-LW,.pos-chip-RW{background:rgba(233,0,82,.12);color:#fb7185;border:1px solid rgba(233,0,82,.25)}
+.pos-chip-other{background:rgba(255,255,255,.06);color:var(--muted);border:1px solid var(--border)}
+
+.card-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.card-stat{background:var(--bg);border-radius:6px;padding:5px 4px;text-align:center}
+.card-stat-val{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;color:var(--green)}
+.card-stat-lbl{font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.3px}
+.card-actions{display:flex;gap:6px;padding:.75rem .85rem 0;border-top:1px solid var(--border);margin-top:.85rem}
+.card-action-btn{flex:1;font-family:'Barlow',sans-serif;font-size:11px;font-weight:500;padding:5px;border-radius:6px;border:1px solid var(--border);background:var(--s2);color:var(--muted);cursor:pointer;transition:all .15s}
+.card-action-btn:hover{color:var(--text);border-color:var(--border2)}
+.card-action-btn.edit:hover{color:var(--green);border-color:rgba(0,255,133,.3);background:rgba(0,255,133,.05)}
+.card-action-btn.del:hover{color:var(--red);border-color:rgba(239,68,68,.3);background:rgba(239,68,68,.05)}
+
+/* Table view */
+.table-card{background:var(--s1);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden}
+.table-scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:900px}
+thead tr{background:var(--purple)}
+th{font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:11px;color:rgba(255,255,255,.5);text-align:left;padding:10px 12px;white-space:nowrap;letter-spacing:.8px;text-transform:uppercase;user-select:none}
+th.sort{cursor:pointer;transition:color .15s}
+th.sort:hover{color:rgba(255,255,255,.8)}
+th.sort-active{color:var(--green)}
+tbody tr{border-bottom:1px solid var(--border);transition:background .1s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:var(--s2)}
+td{padding:10px 12px;vertical-align:middle}
+.td-player{display:flex;align-items:center;gap:10px}
+.td-avatar{width:34px;height:34px;border-radius:50%;object-fit:cover;object-position:top;background:var(--s3);flex-shrink:0;border:1.5px solid var(--border2)}
+.td-avatar-fb{width:34px;height:34px;border-radius:50%;background:var(--s3);border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;color:var(--muted);flex-shrink:0}
+.td-name{font-weight:500;color:#fff}
+.td-sub{font-size:11px;color:var(--muted)}
+.td-team-logo{width:20px;height:20px;object-fit:contain;flex-shrink:0}
+.n-green{color:var(--green);font-weight:600;font-variant-numeric:tabular-nums}
+.n-pink{color:var(--pink);font-weight:500;font-variant-numeric:tabular-nums}
+.n-yellow{color:var(--yellow);font-variant-numeric:tabular-nums}
+.n-red{color:var(--red);font-variant-numeric:tabular-nums}
+.n-muted{color:var(--muted);font-variant-numeric:tabular-nums}
+.table-footer{display:flex;align-items:center;justify-content:space-between;padding:9px 16px;border-top:1px solid var(--border);font-size:12px;color:var(--dim);background:rgba(56,0,60,.4)}
+.icon-btn{background:none;border:1px solid transparent;border-radius:5px;color:var(--muted);cursor:pointer;font-size:13px;padding:4px 7px;transition:all .15s;line-height:1}
+.icon-btn.edit:hover{color:var(--green);border-color:rgba(0,255,133,.3);background:rgba(0,255,133,.05)}
+.icon-btn.del:hover{color:var(--red);border-color:rgba(239,68,68,.3);background:rgba(239,68,68,.05)}
+
+/* Skeleton */
+.skeleton{background:linear-gradient(90deg,var(--s2) 25%,var(--s3) 50%,var(--s2) 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:6px}
+
+/* Modal */
+.overlay{display:flex;position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);z-index:200;align-items:center;justify-content:center;padding:1rem}
+.modal{background:var(--s1);border:1px solid var(--border2);border-radius:var(--rxl);padding:1.75rem;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;animation:modalIn .22s ease}
+.modal-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem}
+.modal-title{font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--green);letter-spacing:2px}
+.modal-x{background:none;border:1px solid var(--border);border-radius:6px;color:var(--muted);cursor:pointer;font-size:16px;padding:3px 9px;transition:all .15s}
+.modal-x:hover{color:var(--text);border-color:var(--border2)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:480px){.form-grid{grid-template-columns:1fr}}
+.fg{display:flex;flex-direction:column;gap:5px}
+.fg.full{grid-column:1/-1}
+.fg label{font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.8px}
+.fg input,.fg select{background:var(--bg);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);font-family:'Barlow',sans-serif;font-size:13px;padding:8px 12px;outline:none;transition:border-color .2s}
+.fg input:focus,.fg select:focus{border-color:var(--green)}
+.fg input:read-only{opacity:.5;cursor:not-allowed}
+.fg select option{background:#1e1e2c}
+.section-divider{grid-column:1/-1;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);border-bottom:1px solid var(--border);padding-bottom:5px;margin-top:6px}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:1.5rem}
+
+/* Confirm */
+.confirm-box{background:var(--s1);border:1px solid rgba(239,68,68,.25);border-radius:var(--rl);padding:1.75rem;max-width:380px;width:100%;animation:modalIn .2s ease}
+.confirm-box h3{font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--red);letter-spacing:1px;margin-bottom:8px}
+.confirm-box p{font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:1.5rem}
+.btn-danger{background:var(--red);border-color:var(--red);color:#fff}
+.btn-danger:hover{background:#b91c1c;border-color:#b91c1c}
+
+/* Player detail */
+.detail-box{background:var(--s1);border:1px solid var(--border2);border-radius:var(--rxl);padding:0;max-width:640px;width:100%;animation:modalIn .22s ease;overflow:hidden;max-height:90vh;overflow-y:auto}
+.detail-hero{background:linear-gradient(135deg,var(--purple) 0%,#1a003c 100%);padding:2rem;display:flex;align-items:flex-end;gap:1.5rem;position:relative;overflow:hidden;min-height:180px}
+.detail-hero::before{content:'';position:absolute;top:-40px;right:-40px;width:200px;height:200px;border-radius:50%;background:rgba(0,255,133,.05)}
+.detail-hero-img{width:110px;height:130px;object-fit:cover;object-position:top;border-radius:12px;border:2px solid rgba(255,255,255,.15);flex-shrink:0;position:relative;z-index:1;filter:drop-shadow(0 8px 24px rgba(0,0,0,.5))}
+.detail-hero-fb{width:90px;height:90px;border-radius:50%;background:var(--s3);border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:36px;color:var(--muted);flex-shrink:0;position:relative;z-index:1}
+.detail-hero-info{position:relative;z-index:1}
+.detail-team-badge{width:40px;height:40px;object-fit:contain;margin-bottom:8px}
+.detail-name{font-family:'Bebas Neue',sans-serif;font-size:36px;color:#fff;line-height:1;letter-spacing:1px}
+.detail-team{font-size:14px;color:rgba(255,255,255,.6);margin-top:4px;display:flex;align-items:center;gap:8px}
+.detail-body{padding:1.5rem}
+.detail-stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:1.25rem}
+@media(max-width:480px){.detail-stats-grid{grid-template-columns:repeat(2,1fr)}}
+.detail-stat{background:var(--bg);border-radius:var(--r);padding:.75rem;text-align:center}
+.detail-stat-val{font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--green);line-height:1}
+.detail-stat-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+.detail-info-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:1.25rem}
+@media(max-width:480px){.detail-info-row{grid-template-columns:repeat(2,1fr)}}
+.detail-info-item{background:var(--bg);border-radius:var(--r);padding:.6rem .8rem}
+.detail-info-lbl{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px}
+.detail-info-val{font-size:14px;font-weight:500;color:var(--text);margin-top:2px}
+.detail-actions{display:flex;gap:10px}
+
+/* Toast */
+.toast-wrap{position:fixed;bottom:1.5rem;right:1.5rem;z-index:300;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{background:var(--s2);border:1px solid var(--border2);border-radius:var(--r);padding:.65rem 1rem;font-size:13px;color:var(--text);display:flex;align-items:center;gap:8px;box-shadow:0 8px 32px rgba(0,0,0,.5);animation:toastIn .25s ease;pointer-events:all}
+.toast.success{border-left:3px solid var(--green)}
+.toast.error{border-left:3px solid var(--red)}
+
+/* Empty / loading */
+.empty{text-align:center;padding:4rem 2rem;color:var(--muted)}
+.empty-icon{font-size:48px;margin-bottom:1rem;opacity:.3}
+.empty h3{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--dim);letter-spacing:1px;margin-bottom:.5rem}
+.spinner{width:32px;height:32px;border:2px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 1rem}
+
+/* Responsive header */
+@media(max-width:640px){
+  .header{padding:0 1rem;height:54px}
+  .logo{font-size:24px}
+  .header-season{display:none}
+  .main{padding:1rem}
+  .nav{padding:0 1rem}
+  .nav-tab{padding:10px 14px;font-size:13px}
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useCallback, useRef } = React;
+
+// ── Config ──────────────────────────────────────────────
+const API = 'http://localhost:8080/api/v1/player';
+
+// Map team names to their Premier League badge URLs (Wikipedia)
+const TEAM_BADGES = {
+  'Arsenal': 'https://upload.wikimedia.org/wikipedia/en/5/53/Arsenal_FC.svg',
+  'Aston Villa': 'https://upload.wikimedia.org/wikipedia/en/f/f9/Aston_Villa_FC_crest_%282016%29.svg',
+  'Brentford': 'https://upload.wikimedia.org/wikipedia/en/2/2a/Brentford_FC_crest.svg',
+  'Brighton': 'https://upload.wikimedia.org/wikipedia/en/f/fd/Brighton_%26_Hove_Albion_logo.svg',
+  'Chelsea': 'https://upload.wikimedia.org/wikipedia/en/c/cc/Chelsea_FC.svg',
+  'Crystal Palace': 'https://upload.wikimedia.org/wikipedia/en/0/0c/Crystal_Palace_FC_logo_%282022%29.svg',
+  'Everton': 'https://upload.wikimedia.org/wikipedia/en/7/7c/Everton_FC_logo.svg',
+  'Fulham': 'https://upload.wikimedia.org/wikipedia/en/e/eb/Fulham_FC_%28shield%29.svg',
+  'Ipswich': 'https://upload.wikimedia.org/wikipedia/en/4/43/Ipswich_Town.svg',
+  'Leicester': 'https://upload.wikimedia.org/wikipedia/en/2/2d/Leicester_City_crest.svg',
+  'Liverpool': 'https://upload.wikimedia.org/wikipedia/en/0/0c/Liverpool_FC.svg',
+  'Man City': 'https://upload.wikimedia.org/wikipedia/en/e/eb/Manchester_City_FC_badge.svg',
+  'Manchester City': 'https://upload.wikimedia.org/wikipedia/en/e/eb/Manchester_City_FC_badge.svg',
+  'Man Utd': 'https://upload.wikimedia.org/wikipedia/en/7/7a/Manchester_United_FC_crest.svg',
+  'Manchester Utd': 'https://upload.wikimedia.org/wikipedia/en/7/7a/Manchester_United_FC_crest.svg',
+  'Newcastle': 'https://upload.wikimedia.org/wikipedia/en/5/56/Newcastle_United_Logo.svg',
+  'Nottm Forest': 'https://upload.wikimedia.org/wikipedia/en/e/e5/Nottingham_Forest_F.C._logo.svg',
+  'Southampton': 'https://upload.wikimedia.org/wikipedia/en/c/c9/FC_Southampton.svg',
+  'Spurs': 'https://upload.wikimedia.org/wikipedia/en/b/b4/Tottenham_Hotspur.svg',
+  'Tottenham': 'https://upload.wikimedia.org/wikipedia/en/b/b4/Tottenham_Hotspur.svg',
+  'West Ham': 'https://upload.wikimedia.org/wikipedia/en/c/c2/West_Ham_United_FC_logo.svg',
+  'Wolves': 'https://upload.wikimedia.org/wikipedia/en/f/fc/Wolverhampton_Wanderers.svg',
+  'Bournemouth': 'https://upload.wikimedia.org/wikipedia/en/e/e5/AFC_Bournemouth_%282013%29.svg',
+};
+
+// Try multiple photo sources for player headshots
+function getPlayerPhotoUrl(name) {
+  const encoded = encodeURIComponent(name.trim());
+  return `https://ui-avatars.com/api/?name=${encoded}&size=200&background=38003c&color=00ff85&bold=true&format=png`;
+}
+
+function getTeamBadge(team) {
+  if (!team) return null;
+  for (const [key, url] of Object.entries(TEAM_BADGES)) {
+    if (team.toLowerCase().includes(key.toLowerCase()) || key.toLowerCase().includes(team.toLowerCase())) return url;
+  }
+  return null;
+}
+
+function getInitials(name) {
+  if (!name) return '?';
+  return name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+}
+
+// Position helpers
+const POS_GROUPS = ['GK','DF','CB','FB','MF','CM','DM','AM','WM','FW','ST','CF','LW','RW'];
+function posClass(pos) {
+  const p = (pos || '').split(',')[0].trim().toUpperCase();
+  if (!POS_GROUPS.includes(p)) return 'other';
+  return p;
+}
+
+function fmt(v, dec = 1) {
+  if (v == null) return '—';
+  const n = parseFloat(v);
+  return isNaN(n) ? '—' : (Number.isInteger(n) ? n : n.toFixed(dec));
+}
+
+// ── Toast system ─────────────────────────────────────────
+function useToasts() {
+  const [toasts, setToasts] = useState([]);
+  const add = useCallback((msg, type = 'success') => {
+    const id = Date.now();
+    setToasts(t => [...t, { id, msg, type }]);
+    setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 3200);
+  }, []);
+  return { toasts, add };
+}
+
+// ── Skeleton card ─────────────────────────────────────────
+function SkeletonCard() {
+  return (
+    <div className="player-card" style={{ cursor: 'default' }}>
+      <div className="card-header" style={{ background: 'var(--s2)' }}>
+        <div className="skeleton" style={{ width: 80, height: 80, borderRadius: '50%', marginBottom: 8 }} />
+      </div>
+      <div className="card-body">
+        <div className="skeleton" style={{ height: 16, marginBottom: 8, width: '80%' }} />
+        <div className="skeleton" style={{ height: 12, marginBottom: 12, width: '50%' }} />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 4 }}>
+          {[0,1,2].map(i => <div key={i} className="skeleton" style={{ height: 40, borderRadius: 6 }} />)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Player Photo ──────────────────────────────────────────
+function PlayerPhoto({ name, className, style, fallbackClass, fallbackStyle }) {
+  const [err, setErr] = useState(false);
+  const initials = getInitials(name);
+  if (err) return <div className={fallbackClass || 'card-img-fallback'} style={fallbackStyle}>{initials}</div>;
+  return (
+    <img
+      className={className}
+      style={style}
+      src={getPlayerPhotoUrl(name)}
+      alt={name}
+      onError={() => setErr(true)}
+    />
+  );
+}
+
+// ── Team Badge ────────────────────────────────────────────
+function TeamBadge({ team, size = 32, className }) {
+  const [err, setErr] = useState(false);
+  const url = getTeamBadge(team);
+  const abbr = team ? team.substring(0, 3).toUpperCase() : '?';
+  if (!url || err) return (
+    <div className="card-team-badge-fallback" style={{ width: size, height: size }}>
+      <span style={{ fontSize: size * 0.28 }}>{abbr}</span>
+    </div>
+  );
+  return <img className={className || 'card-team-badge'} src={url} alt={team} style={{ width: size, height: size }} onError={() => setErr(true)} />;
+}
+
+// ── Player Card ───────────────────────────────────────────
+function PlayerCard({ player, onEdit, onDelete, onView, index }) {
+  const pc = posClass(player.pos);
+  return (
+    <div className="player-card fade-up" style={{ animationDelay: `${Math.min(index * 0.04, 0.5)}s` }} onClick={() => onView(player)}>
+      <div className="card-header">
+        <div className="card-bg" />
+        <TeamBadge team={player.team} size={30} />
+        <PlayerPhoto
+          name={player.name}
+          className="card-img"
+          fallbackClass="card-img-fallback"
+        />
+        <div className={`card-pos-bar pos-bar-${pc}`} />
+      </div>
+      <div className="card-body">
+        <div className="card-name">{player.name}</div>
+        <div className="card-meta">
+          <span className={`pos-chip pos-chip-${pc}`}>{player.pos || '?'}</span>
+          <span>{player.nation || '—'}</span>
+          {player.age && <span>· {player.age}y</span>}
+        </div>
+        <div className="card-stats">
+          <div className="card-stat">
+            <div className="card-stat-val">{fmt(player.gls)}</div>
+            <div className="card-stat-lbl">Goals</div>
+          </div>
+          <div className="card-stat">
+            <div className="card-stat-val" style={{ color: 'var(--pink)' }}>{fmt(player.ast)}</div>
+            <div className="card-stat-lbl">Assists</div>
+          </div>
+          <div className="card-stat">
+            <div className="card-stat-val" style={{ color: '#a78bfa' }}>{fmt(player.xg)}</div>
+            <div className="card-stat-lbl">xG</div>
+          </div>
+        </div>
+      </div>
+      <div className="card-actions" onClick={e => e.stopPropagation()}>
+        <button className="card-action-btn edit" onClick={() => onEdit(player)}>✏ Edit</button>
+        <button className="card-action-btn del" onClick={() => onDelete(player.name)}>⊘ Delete</button>
+      </div>
+    </div>
+  );
+}
+
+// ── Table Row ─────────────────────────────────────────────
+function TableRow({ player, onEdit, onDelete, onView }) {
+  const pc = posClass(player.pos);
+  return (
+    <tr style={{ cursor: 'pointer' }} onClick={() => onView(player)}>
+      <td>
+        <div className="td-player">
+          <PlayerPhoto name={player.name} className="td-avatar" fallbackClass="td-avatar-fb" />
+          <div>
+            <div className="td-name">{player.name}</div>
+            <div className="td-sub">{player.team}</div>
+          </div>
+        </div>
+      </td>
+      <td>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <TeamBadge team={player.team} size={20} />
+          <span style={{ color: 'var(--muted)', fontSize: 12 }}>{player.team}</span>
+        </div>
+      </td>
+      <td style={{ color: 'var(--muted)' }}>{player.nation || '—'}</td>
+      <td><span className={`pos-chip pos-chip-${pc}`}>{player.pos || '?'}</span></td>
+      <td className="n-muted">{player.age ?? '—'}</td>
+      <td className="n-muted">{player.mp ?? '—'}</td>
+      <td className="n-green">{fmt(player.gls)}</td>
+      <td className="n-pink">{fmt(player.ast)}</td>
+      <td className="n-muted">{fmt(player.xg, 2)}</td>
+      <td className="n-muted">{fmt(player.xag, 2)}</td>
+      <td className="n-yellow">{fmt(player.crdy)}</td>
+      <td className="n-red">{fmt(player.crdr)}</td>
+      <td onClick={e => e.stopPropagation()}>
+        <div style={{ display: 'flex', gap: 4 }}>
+          <button className="icon-btn edit" onClick={() => onEdit(player)}>✏</button>
+          <button className="icon-btn del" onClick={() => onDelete(player.name)}>⊘</button>
+        </div>
+      </td>
+    </tr>
+  );
+}
+
+// ── Player Detail Modal ───────────────────────────────────
+function PlayerDetail({ player, onClose, onEdit, onDelete }) {
+  const pc = posClass(player.pos);
+  return (
+    <div className="overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="detail-box">
+        <div className="detail-hero">
+          <PlayerPhoto
+            name={player.name}
+            className="detail-hero-img"
+            fallbackClass="detail-hero-fb"
+          />
+          <div className="detail-hero-info">
+            <TeamBadge team={player.team} size={36} className="detail-team-badge" />
+            <div className="detail-name">{player.name}</div>
+            <div className="detail-team">
+              <span className={`pos-chip pos-chip-${pc}`}>{player.pos || '?'}</span>
+              {player.team} {player.nation && `· ${player.nation}`}
+            </div>
+          </div>
+          <button onClick={onClose} style={{ position: 'absolute', top: 14, right: 14, background: 'rgba(255,255,255,.1)', border: '1px solid rgba(255,255,255,.15)', borderRadius: 6, color: '#fff', cursor: 'pointer', padding: '3px 9px', fontSize: 15 }}>✕</button>
+        </div>
+        <div className="detail-body">
+          <div className="detail-stats-grid">
+            <div className="detail-stat"><div className="detail-stat-val">{fmt(player.gls)}</div><div className="detail-stat-lbl">Goals</div></div>
+            <div className="detail-stat"><div className="detail-stat-val" style={{ color: 'var(--pink)' }}>{fmt(player.ast)}</div><div className="detail-stat-lbl">Assists</div></div>
+            <div className="detail-stat"><div className="detail-stat-val" style={{ color: '#a78bfa' }}>{fmt(player.xg, 2)}</div><div className="detail-stat-lbl">xG</div></div>
+            <div className="detail-stat"><div className="detail-stat-val" style={{ color: '#60a5fa' }}>{fmt(player.xag, 2)}</div><div className="detail-stat-lbl">xAG</div></div>
+          </div>
+          <div className="detail-info-row">
+            <div className="detail-info-item"><div className="detail-info-lbl">Age</div><div className="detail-info-val">{player.age ?? '—'}</div></div>
+            <div className="detail-info-item"><div className="detail-info-lbl">Matches</div><div className="detail-info-val">{player.mp ?? '—'}</div></div>
+            <div className="detail-info-item"><div className="detail-info-lbl">Starts</div><div className="detail-info-val">{player.starts ?? '—'}</div></div>
+            <div className="detail-info-item"><div className="detail-info-lbl">Minutes</div><div className="detail-info-val">{player.min != null ? Number(player.min).toLocaleString() : '—'}</div></div>
+            <div className="detail-info-item"><div className="detail-info-lbl">Pen Goals</div><div className="detail-info-val">{fmt(player.pk)}</div></div>
+            <div className="detail-info-item"><div className="detail-info-lbl">Cards</div><div className="detail-info-val" style={{ color: 'var(--yellow)' }}>{fmt(player.crdy)}Y / <span style={{ color: 'var(--red)' }}>{fmt(player.crdr)}R</span></div></div>
+          </div>
+          <div className="detail-actions">
+            <button className="btn" style={{ flex: 1 }} onClick={() => { onClose(); onEdit(player); }}>✏ Edit Player</button>
+            <button className="btn btn-danger" onClick={() => { onClose(); onDelete(player.name); }}>⊘ Delete</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Player Form Modal ─────────────────────────────────────
+const EMPTY_FORM = { name:'',team:'',nation:'',pos:'',age:'',mp:'',starts:'',min:'',gls:'',ast:'',pk:'',crdy:'',crdr:'',xg:'',xag:'' };
+
+function PlayerForm({ initial, editMode, onSave, onClose }) {
+  const [form, setForm] = useState(initial || EMPTY_FORM);
+  const [saving, setSaving] = useState(false);
+
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const num = v => { const n = parseFloat(v); return isNaN(n) ? null : n; };
+  const numi = v => { const n = parseInt(v); return isNaN(n) ? null : n; };
+
+  const submit = async () => {
+    if (!form.name.trim()) { alert('Name is required'); return; }
+    if (!form.team.trim()) { alert('Team is required'); return; }
+    setSaving(true);
+    const data = {
+      name: form.name.trim(), team: form.team.trim(),
+      nation: form.nation.trim() || null, pos: form.pos || null,
+      age: numi(form.age), mp: numi(form.mp), starts: numi(form.starts),
+      min: num(form.min), gls: num(form.gls), ast: num(form.ast),
+      pk: num(form.pk), crdy: num(form.crdy), crdr: num(form.crdr),
+      xg: num(form.xg), xag: num(form.xag),
+    };
+    try {
+      const r = await fetch(API, { method: editMode ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      onSave(form.name);
+    } catch (e) { alert('Error: ' + e.message); }
+    finally { setSaving(false); }
+  };
+
+  const Field = ({ label, id, type = 'text', step, placeholder, full }) => (
+    <div className={`fg${full ? ' full' : ''}`}>
+      <label>{label}</label>
+      <input
+        type={type} step={step} placeholder={placeholder}
+        value={form[id]} readOnly={editMode && id === 'name'}
+        onChange={e => set(id, e.target.value)}
+      />
+    </div>
+  );
+
+  return (
+    <div className="overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="modal">
+        <div className="modal-hdr">
+          <div className="modal-title">{editMode ? 'Edit Player' : 'Add Player'}</div>
+          <button className="modal-x" onClick={onClose}>✕</button>
+        </div>
+        <div className="form-grid">
+          <div className="section-divider">Identity</div>
+          <Field label="Full Name *" id="name" placeholder="e.g. Mohamed Salah" full />
+          <Field label="Team *" id="team" placeholder="e.g. Liverpool" />
+          <Field label="Nation" id="nation" placeholder="e.g. EGY" />
+          <div className="fg">
+            <label>Position</label>
+            <select value={form.pos} onChange={e => set('pos', e.target.value)}>
+              <option value="">— Select —</option>
+              {['GK','DF','CB','FB','MF','CM','DM','AM','WM','FW','LW','RW','ST','CF'].map(p => <option key={p} value={p}>{p}</option>)}
+            </select>
+          </div>
+          <Field label="Age" id="age" type="number" placeholder="e.g. 31" />
+
+          <div className="section-divider">Appearances</div>
+          <Field label="Matches Played" id="mp" type="number" placeholder="0" />
+          <Field label="Starts" id="starts" type="number" placeholder="0" />
+          <Field label="Minutes" id="min" type="number" placeholder="0" full />
+
+          <div className="section-divider">Attack</div>
+          <Field label="Goals" id="gls" type="number" step="0.1" placeholder="0" />
+          <Field label="Assists" id="ast" type="number" step="0.1" placeholder="0" />
+          <Field label="Penalty Goals (PK)" id="pk" type="number" step="0.1" placeholder="0" />
+          <Field label="xG" id="xg" type="number" step="0.01" placeholder="0.00" />
+          <Field label="xAG" id="xag" type="number" step="0.01" placeholder="0.00" />
+
+          <div className="section-divider">Discipline</div>
+          <Field label="Yellow Cards" id="crdy" type="number" step="0.1" placeholder="0" />
+          <Field label="Red Cards" id="crdr" type="number" step="0.1" placeholder="0" />
+        </div>
+        <div className="modal-actions">
+          <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
+          <button className="btn btn-primary" onClick={submit} disabled={saving}>{saving ? 'Saving…' : '💾 Save Player'}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Confirm Dialog ────────────────────────────────────────
+function ConfirmDialog({ name, onConfirm, onClose }) {
+  return (
+    <div className="overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="confirm-box">
+        <h3>Delete Player</h3>
+        <p>Remove <strong style={{ color: 'var(--text)' }}>{name}</strong> from the database? This action cannot be undone.</p>
+        <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+          <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
+          <button className="btn btn-danger" onClick={onConfirm}>⊘ Delete</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Sort Header ───────────────────────────────────────────
+function SortTh({ col, label, sort, onSort }) {
+  const active = sort.col === col;
+  return (
+    <th className={`sort${active ? ' sort-active' : ''}`} onClick={() => onSort(col)}>
+      {label} {active ? (sort.asc ? '▲' : '▼') : '⇅'}
+    </th>
+  );
+}
+
+// ── Main App ──────────────────────────────────────────────
+function App() {
+  const [players, setPlayers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [online, setOnline] = useState(null);
+  const [view, setView] = useState('cards'); // cards | table
+  const [tab, setTab] = useState('all'); // all | gk | df | mf | fw
+  const [sort, setSort] = useState({ col: 'name', asc: true });
+  const [filters, setFilters] = useState({ name: '', nation: '', team: '', pos: '' });
+  const [modal, setModal] = useState(null); // null | {type:'add'|'edit'|'confirm'|'detail', data?}
+  const { toasts, add: toast } = useToasts();
+  const debRef = useRef(null);
+
+  const fetchPlayers = useCallback(async () => {
+    setLoading(true);
+    try {
+      const r = await fetch(API);
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const data = await r.json();
+      setPlayers(data);
+      setOnline(true);
+    } catch (e) {
+      setOnline(false);
+      toast('Cannot connect to backend: ' + e.message, 'error');
+    } finally { setLoading(false); }
+  }, []);
+
+  useEffect(() => { fetchPlayers(); }, [fetchPlayers]);
+
+  useEffect(() => {
+    const handler = e => { if (e.key === 'Escape') setModal(null); };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
+
+  const handleDelete = async (name) => {
+    try {
+      const r = await fetch(`${API}/${encodeURIComponent(name)}`, { method: 'DELETE' });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      toast(`${name} removed`, 'success');
+      setModal(null);
+      fetchPlayers();
+    } catch (e) { toast('Delete failed: ' + e.message, 'error'); }
+  };
+
+  const handleSave = async (name) => {
+    toast(`${name} saved`, 'success');
+    setModal(null);
+    fetchPlayers();
+  };
+
+  // Filter + sort
+  const tabPosMap = { gk: 'GK', df: 'DF', mf: 'MF', fw: 'FW' };
+  const filtered = players
+    .filter(p => {
+      const n = filters.name.toLowerCase();
+      const nat = filters.nation.toLowerCase();
+      const tabPos = tabPosMap[tab];
+      return (
+        (!n || (p.name || '').toLowerCase().includes(n)) &&
+        (!nat || (p.nation || '').toLowerCase().includes(nat)) &&
+        (!filters.team || p.team === filters.team) &&
+        (!filters.pos || (p.pos || '').toUpperCase().includes(filters.pos.toUpperCase())) &&
+        (!tabPos || (p.pos || '').toUpperCase().includes(tabPos))
+      );
+    })
+    .sort((a, b) => {
+      const va = a[sort.col] ?? (typeof a[sort.col] === 'number' ? 0 : '');
+      const vb = b[sort.col] ?? (typeof b[sort.col] === 'number' ? 0 : '');
+      if (typeof va === 'number' && typeof vb === 'number') return sort.asc ? va - vb : vb - va;
+      return sort.asc ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
+    });
+
+  const toggleSort = col => setSort(s => ({ col, asc: s.col === col ? !s.asc : true }));
+  const setFilter = (k, v) => {
+    clearTimeout(debRef.current);
+    debRef.current = setTimeout(() => setFilters(f => ({ ...f, [k]: v })), 220);
+  };
+  const teams = [...new Set(players.map(p => p.team).filter(Boolean))].sort();
+
+  // Stats
+  const topScorer = [...players].sort((a, b) => (b.gls || 0) - (a.gls || 0))[0];
+  const totalGoals = players.reduce((s, p) => s + (p.gls || 0), 0);
+  const totalAssists = players.reduce((s, p) => s + (p.ast || 0), 0);
+
+  const TAB_COUNTS = {
+    all: players.length,
+    gk: players.filter(p => (p.pos || '').toUpperCase().includes('GK')).length,
+    df: players.filter(p => (p.pos || '').toUpperCase().includes('DF') || (p.pos || '').toUpperCase().includes('CB') || (p.pos || '').toUpperCase().includes('FB')).length,
+    mf: players.filter(p => ['MF','CM','DM','AM','WM'].some(x => (p.pos || '').toUpperCase().includes(x))).length,
+    fw: players.filter(p => ['FW','ST','CF','LW','RW'].some(x => (p.pos || '').toUpperCase().includes(x))).length,
+  };
+
+  return (
+    <div className="app">
+      {/* Header */}
+      <header className="header">
+        <div className="logo">Premier<span>Zone</span></div>
+        <div className="header-divider" />
+        <span className="header-season">2024 / 25</span>
+        <div className="header-right">
+          <div className="status-pill">
+            <div className={`status-dot${online === false ? ' offline' : ''}`} />
+            <span>{online === null ? 'Connecting…' : online ? 'Live' : 'Offline'}</span>
+          </div>
+          <button className="btn btn-primary" onClick={() => setModal({ type: 'add' })}>
+            <span>+</span> Add Player
+          </button>
+        </div>
+      </header>
+
+      {/* Position tabs */}
+      <nav className="nav">
+        {[['all','All Players'],['gk','Goalkeepers'],['df','Defenders'],['mf','Midfielders'],['fw','Forwards']].map(([key, label]) => (
+          <button key={key} className={`nav-tab${tab === key ? ' active' : ''}`} onClick={() => setTab(key)}>
+            {label} <span style={{ opacity: .5, fontSize: 11 }}>({TAB_COUNTS[key]})</span>
+          </button>
+        ))}
+      </nav>
+
+      <div className="main">
+        {/* Stats strip */}
+        <div className="stats-strip fade-up">
+          <div className="stat-tile">
+            <div className="stat-val">{players.length}</div>
+            <div className="stat-label">Players</div>
+          </div>
+          <div className="stat-tile">
+            <div className="stat-val">{new Set(players.map(p => p.team).filter(Boolean)).size}</div>
+            <div className="stat-label">Teams</div>
+          </div>
+          <div className="stat-tile">
+            <div className="stat-val">{totalGoals.toFixed(0)}</div>
+            <div className="stat-label">Total Goals</div>
+          </div>
+          <div className="stat-tile">
+            <div className="stat-val">{totalAssists.toFixed(0)}</div>
+            <div className="stat-label">Total Assists</div>
+          </div>
+          <div className="stat-tile">
+            <div className="stat-val" style={{ fontSize: 18, paddingTop: 4 }}>{topScorer ? topScorer.name.split(' ').pop() : '—'}</div>
+            <div className="stat-label">Top Scorer {topScorer ? `(${fmt(topScorer.gls)})` : ''}</div>
+          </div>
+          <div className="stat-tile">
+            <div className="stat-val">{new Set(players.map(p => p.nation).filter(Boolean)).size}</div>
+            <div className="stat-label">Nations</div>
+          </div>
+        </div>
+
+        {/* Toolbar */}
+        <div className="toolbar fade-up-1">
+          <div className="search-wrap">
+            <span className="search-icon">🔍</span>
+            <input type="text" placeholder="Search name…" onChange={e => setFilter('name', e.target.value)} />
+          </div>
+          <div className="search-wrap" style={{ minWidth: 130, flex: '0 1 130px' }}>
+            <span className="search-icon">🌍</span>
+            <input type="text" placeholder="Nation…" onChange={e => setFilter('nation', e.target.value)} />
+          </div>
+          <select onChange={e => setFilters(f => ({ ...f, team: e.target.value }))} style={{ minWidth: 140 }}>
+            <option value="">All Teams</option>
+            {teams.map(t => <option key={t} value={t}>{t}</option>)}
+          </select>
+          <button className="btn btn-ghost" onClick={() => { setFilters({ name:'', nation:'', team:'', pos:'' }); setTab('all'); document.querySelectorAll('.toolbar input').forEach(i => i.value = ''); document.querySelectorAll('.toolbar select').forEach(s => s.value = ''); }}>
+            ✕ Clear
+          </button>
+          <button className="btn" onClick={fetchPlayers}>↻</button>
+          <div className="view-toggle">
+            <button className={`view-btn${view === 'cards' ? ' active' : ''}`} onClick={() => setView('cards')}>⊞</button>
+            <button className={`view-btn${view === 'table' ? ' active' : ''}`} onClick={() => setView('table')}>☰</button>
+          </div>
+          <span className="result-count">{filtered.length !== players.length ? `${filtered.length} of ${players.length}` : `${players.length} players`}</span>
+        </div>
+
+        {/* Content */}
+        {loading ? (
+          <div className="cards-grid fade-up-2">{Array(12).fill(0).map((_, i) => <SkeletonCard key={i} />)}</div>
+        ) : online === false ? (
+          <div className="empty"><div className="empty-icon">⚡</div><h3>Backend Offline</h3><p>Make sure Spring Boot is running on localhost:8080</p><button className="btn btn-primary" style={{ marginTop: '1rem' }} onClick={fetchPlayers}>↻ Retry</button></div>
+        ) : filtered.length === 0 ? (
+          <div className="empty"><div className="empty-icon">👤</div><h3>No Players Found</h3><p>Try adjusting your filters</p></div>
+        ) : view === 'cards' ? (
+          <div className="cards-grid fade-up-2">
+            {filtered.map((p, i) => (
+              <PlayerCard key={p.name} player={p} index={i}
+                onEdit={p => setModal({ type: 'edit', data: p })}
+                onDelete={name => setModal({ type: 'confirm', data: name })}
+                onView={p => setModal({ type: 'detail', data: p })}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="table-card fade-up-2">
+            <div className="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <SortTh col="name" label="Player" sort={sort} onSort={toggleSort} />
+                    <SortTh col="team" label="Team" sort={sort} onSort={toggleSort} />
+                    <SortTh col="nation" label="Nation" sort={sort} onSort={toggleSort} />
+                    <th>Pos</th>
+                    <SortTh col="age" label="Age" sort={sort} onSort={toggleSort} />
+                    <SortTh col="mp" label="MP" sort={sort} onSort={toggleSort} />
+                    <SortTh col="gls" label="Gls" sort={sort} onSort={toggleSort} />
+                    <SortTh col="ast" label="Ast" sort={sort} onSort={toggleSort} />
+                    <SortTh col="xg" label="xG" sort={sort} onSort={toggleSort} />
+                    <SortTh col="xag" label="xAG" sort={sort} onSort={toggleSort} />
+                    <SortTh col="crdy" label="YC" sort={sort} onSort={toggleSort} />
+                    <SortTh col="crdr" label="RC" sort={sort} onSort={toggleSort} />
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map(p => (
+                    <TableRow key={p.name} player={p}
+                      onEdit={p => setModal({ type: 'edit', data: p })}
+                      onDelete={name => setModal({ type: 'confirm', data: name })}
+                      onView={p => setModal({ type: 'detail', data: p })}
+                    />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="table-footer">
+              <span>Showing {filtered.length} player{filtered.length !== 1 ? 's' : ''}</span>
+              <span>PremierZone · localhost:8080</span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Modals */}
+      {modal?.type === 'detail' && (
+        <PlayerDetail player={modal.data}
+          onClose={() => setModal(null)}
+          onEdit={p => setModal({ type: 'edit', data: p })}
+          onDelete={name => setModal({ type: 'confirm', data: name })}
+        />
+      )}
+      {(modal?.type === 'add' || modal?.type === 'edit') && (
+        <PlayerForm
+          initial={modal.type === 'edit' ? {
+            name: modal.data.name, team: modal.data.team || '', nation: modal.data.nation || '',
+            pos: modal.data.pos || '', age: modal.data.age || '', mp: modal.data.mp || '',
+            starts: modal.data.starts || '', min: modal.data.min || '', gls: modal.data.gls || '',
+            ast: modal.data.ast || '', pk: modal.data.pk || '', crdy: modal.data.crdy || '',
+            crdr: modal.data.crdr || '', xg: modal.data.xg || '', xag: modal.data.xag || ''
+          } : EMPTY_FORM}
+          editMode={modal.type === 'edit'}
+          onSave={handleSave}
+          onClose={() => setModal(null)}
+        />
+      )}
+      {modal?.type === 'confirm' && (
+        <ConfirmDialog
+          name={modal.data}
+          onConfirm={() => handleDelete(modal.data)}
+          onClose={() => setModal(null)}
+        />
+      )}
+
+      {/* Toasts */}
+      <div className="toast-wrap">
+        {toasts.map(t => (
+          <div key={t.id} className={`toast ${t.type}`}>
+            <span>{t.type === 'success' ? '✓' : '✕'}</span>
+            <span>{t.msg}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

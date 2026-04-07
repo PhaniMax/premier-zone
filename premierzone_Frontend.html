@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PremierZone — Player Stats</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;1,9..40,400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --epl-purple: #38003c;
+    --epl-green: #00ff85;
+    --epl-pink: #e90052;
+    --epl-purple-mid: #560a5e;
+    --bg: #0f0f13;
+    --surface: #1a1a22;
+    --surface2: #22222e;
+    --border: rgba(255,255,255,0.08);
+    --border-mid: rgba(255,255,255,0.14);
+    --text: #f0f0f5;
+    --text-muted: #8888a0;
+    --text-dim: #555568;
+    --green: #00ff85;
+    --pink: #e90052;
+    --yellow: #fbbf24;
+    --red: #ef4444;
+    --radius: 10px;
+    --radius-lg: 16px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--surface); }
+  ::-webkit-scrollbar-thumb { background: var(--epl-purple-mid); border-radius: 3px; }
+
+  /* ── Header ── */
+  header {
+    background: linear-gradient(135deg, var(--epl-purple) 0%, #1a003c 100%);
+    border-bottom: 1px solid rgba(0,255,133,0.2);
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    height: 64px;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 32px;
+    letter-spacing: 3px;
+    color: #fff;
+    line-height: 1;
+  }
+  .logo span { color: var(--epl-green); }
+
+  .header-season {
+    font-size: 11px;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-right: auto;
+  }
+
+  .header-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .status-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* ── Layout ── */
+  .main { max-width: 1400px; margin: 0 auto; padding: 1.5rem 2rem 3rem; }
+
+  /* ── Stats Strip ── */
+  .stats-strip {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 10px;
+    margin-bottom: 1.5rem;
+  }
+
+  .stat-tile {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.2rem;
+    position: relative;
+    overflow: hidden;
+    transition: border-color .2s;
+  }
+  .stat-tile::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--epl-pink), var(--epl-green));
+  }
+  .stat-tile:hover { border-color: var(--border-mid); }
+  .stat-val {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 34px;
+    color: var(--epl-green);
+    line-height: 1;
+  }
+  .stat-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* ── Toolbar ── */
+  .toolbar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1rem 1.25rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
+  .toolbar input, .toolbar select {
+    background: var(--bg);
+    border: 1px solid var(--border-mid);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    padding: 8px 12px;
+    outline: none;
+    transition: border-color .2s;
+  }
+  .toolbar input { flex: 1; min-width: 150px; }
+  .toolbar input:focus, .toolbar select:focus { border-color: var(--epl-green); }
+  .toolbar select option { background: #1a1a22; }
+
+  .btn {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border-mid);
+    background: var(--surface2);
+    color: var(--text);
+    cursor: pointer;
+    transition: all .15s;
+    white-space: nowrap;
+  }
+  .btn:hover { background: var(--surface); border-color: rgba(255,255,255,0.2); }
+  .btn:active { transform: scale(.97); }
+
+  .btn-primary {
+    background: var(--epl-pink);
+    border-color: var(--epl-pink);
+    color: #fff;
+  }
+  .btn-primary:hover { background: #c0003f; border-color: #c0003f; }
+
+  .btn-ghost {
+    background: transparent;
+    border-color: var(--border);
+    color: var(--text-muted);
+  }
+  .btn-ghost:hover { color: var(--text); border-color: var(--border-mid); }
+
+  /* ── Table ── */
+  .table-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+
+  .table-scroll { overflow-x: auto; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    min-width: 900px;
+  }
+
+  thead tr {
+    background: var(--epl-purple);
+  }
+
+  th {
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    font-size: 11px;
+    color: rgba(255,255,255,0.6);
+    text-align: left;
+    padding: 10px 12px;
+    white-space: nowrap;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    user-select: none;
+  }
+
+  th.sortable { cursor: pointer; }
+  th.sortable:hover { color: var(--epl-green); }
+  th.sort-active { color: var(--epl-green); }
+
+  th .sort-icon { margin-left: 4px; font-size: 10px; opacity: 0.6; }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background .1s;
+  }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--surface2); }
+
+  td {
+    padding: 10px 12px;
+    vertical-align: middle;
+    color: var(--text);
+  }
+
+  .player-name { font-weight: 500; color: #fff; }
+
+  .pos-badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 500;
+    padding: 2px 7px;
+    border-radius: 4px;
+    letter-spacing: 0.3px;
+  }
+  .pos-GK  { background: rgba(251,191,36,0.15); color: #fbbf24; border: 1px solid rgba(251,191,36,0.3); }
+  .pos-DF, .pos-CB, .pos-FB { background: rgba(34,197,94,0.12); color: #4ade80; border: 1px solid rgba(34,197,94,0.25); }
+  .pos-MF, .pos-CM, .pos-DM, .pos-AM, .pos-WM { background: rgba(139,92,246,0.15); color: #a78bfa; border: 1px solid rgba(139,92,246,0.3); }
+  .pos-FW, .pos-ST, .pos-CF, .pos-LW, .pos-RW { background: rgba(239,68,68,0.12); color: #f87171; border: 1px solid rgba(239,68,68,0.25); }
+  .pos-other { background: rgba(255,255,255,0.06); color: var(--text-muted); border: 1px solid var(--border); }
+
+  .stat-num { color: var(--text); font-variant-numeric: tabular-nums; }
+  .stat-green { color: var(--epl-green); font-weight: 500; }
+  .stat-yellow { color: var(--yellow); }
+  .stat-red { color: var(--red); }
+  .stat-pink { color: var(--epl-pink); }
+
+  .action-cell { display: flex; gap: 6px; align-items: center; }
+  .icon-btn {
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 4px 6px;
+    line-height: 1;
+    transition: all .15s;
+  }
+  .icon-btn:hover { border-color: var(--border-mid); color: var(--text); background: var(--surface2); }
+  .icon-btn.edit:hover { color: var(--epl-green); border-color: rgba(0,255,133,0.3); }
+  .icon-btn.del:hover { color: var(--red); border-color: rgba(239,68,68,0.3); }
+
+  .empty-state, .loading-state {
+    text-align: center;
+    padding: 3rem;
+    color: var(--text-muted);
+    font-size: 14px;
+  }
+  .empty-state svg, .loading-state svg { margin-bottom: 12px; opacity: 0.3; }
+
+  /* Spinner */
+  .spinner {
+    width: 28px; height: 28px;
+    border: 2px solid var(--border);
+    border-top-color: var(--epl-green);
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+    margin: 0 auto 12px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Table footer ── */
+  .table-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--text-muted);
+    background: var(--epl-purple);
+  }
+
+  /* ── Modal ── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(4px);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border-mid);
+    border-radius: var(--radius-lg);
+    padding: 1.75rem;
+    width: 100%;
+    max-width: 540px;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: modalIn .2s ease;
+  }
+  @keyframes modalIn {
+    from { opacity: 0; transform: translateY(16px) scale(.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+  }
+  .modal-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 26px;
+    color: var(--epl-green);
+    letter-spacing: 2px;
+  }
+  .modal-close {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 18px;
+    padding: 2px 8px;
+    transition: all .15s;
+  }
+  .modal-close:hover { color: var(--text); border-color: var(--border-mid); }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group.full { grid-column: 1 / -1; }
+
+  .form-group label {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .form-group input, .form-group select {
+    background: var(--bg);
+    border: 1px solid var(--border-mid);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    padding: 8px 12px;
+    outline: none;
+    transition: border-color .2s;
+  }
+  .form-group input:focus, .form-group select:focus { border-color: var(--epl-green); }
+  .form-group input:read-only { opacity: 0.6; cursor: not-allowed; }
+  .form-group select option { background: #1a1a22; }
+
+  .form-section-title {
+    grid-column: 1 / -1;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 6px;
+    margin-top: 4px;
+  }
+
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 1.5rem;
+  }
+
+  /* ── Confirm dialog ── */
+  .confirm-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(4px);
+    z-index: 110;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+  .confirm-overlay.open { display: flex; }
+
+  .confirm-box {
+    background: var(--surface);
+    border: 1px solid rgba(239,68,68,0.3);
+    border-radius: var(--radius-lg);
+    padding: 1.75rem;
+    max-width: 380px;
+    width: 100%;
+    animation: modalIn .2s ease;
+  }
+  .confirm-box h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    color: var(--red);
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+  }
+  .confirm-box p { font-size: 14px; color: var(--text-muted); line-height: 1.5; margin-bottom: 1.5rem; }
+  .confirm-actions { display: flex; gap: 10px; justify-content: flex-end; }
+  .btn-danger { background: var(--red); border-color: var(--red); color: #fff; }
+  .btn-danger:hover { background: #c02; border-color: #c02; }
+
+  /* ── Toast ── */
+  .toast-container { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 200; display: flex; flex-direction: column; gap: 8px; }
+
+  .toast {
+    background: var(--surface2);
+    border: 1px solid var(--border-mid);
+    border-radius: var(--radius);
+    padding: .65rem 1rem .65rem .85rem;
+    font-size: 13px;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    animation: toastIn .25s ease;
+    transition: opacity .3s, transform .3s;
+  }
+  @keyframes toastIn {
+    from { opacity: 0; transform: translateX(20px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  .toast.hide { opacity: 0; transform: translateX(20px); }
+  .toast-icon { font-size: 15px; }
+  .toast.success { border-left: 3px solid var(--epl-green); }
+  .toast.error { border-left: 3px solid var(--red); }
+
+  /* ── Responsive ── */
+  @media (max-width: 768px) {
+    header { padding: 0 1rem; }
+    .main { padding: 1rem 1rem 2rem; }
+    .form-grid { grid-template-columns: 1fr; }
+    .form-group.full { grid-column: 1; }
+    .logo { font-size: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="logo">Premier<span>Zone</span></div>
+  <span class="header-season">2024 / 25 Season</span>
+  <div class="header-status">
+    <div class="status-dot" id="statusDot"></div>
+    <span id="statusText">Connecting…</span>
+  </div>
+  <button class="btn btn-primary" onclick="openAdd()" style="margin-left:12px">+ Add Player</button>
+</header>
+
+<!-- Main -->
+<div class="main">
+
+  <!-- Stats Strip -->
+  <div class="stats-strip">
+    <div class="stat-tile">
+      <div class="stat-val" id="stTotal">—</div>
+      <div class="stat-label">Total Players</div>
+    </div>
+    <div class="stat-tile">
+      <div class="stat-val" id="stTeams">—</div>
+      <div class="stat-label">Teams</div>
+    </div>
+    <div class="stat-tile">
+      <div class="stat-val" id="stGoals">—</div>
+      <div class="stat-label">Total Goals</div>
+    </div>
+    <div class="stat-tile">
+      <div class="stat-val" id="stAssists">—</div>
+      <div class="stat-label">Total Assists</div>
+    </div>
+    <div class="stat-tile">
+      <div class="stat-val" id="stTopScorer" style="font-size:22px">—</div>
+      <div class="stat-label">Top Scorer</div>
+    </div>
+    <div class="stat-tile">
+      <div class="stat-val" id="stNations">—</div>
+      <div class="stat-label">Nations</div>
+    </div>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <input id="searchName" type="text" placeholder="🔍  Search by name…" oninput="debounce('name', this.value)">
+    <input id="searchNation" type="text" placeholder="🌍  Nation…" oninput="debounce('nation', this.value)">
+    <select id="filterTeam" onchange="applyFilters()">
+      <option value="">All Teams</option>
+    </select>
+    <select id="filterPos" onchange="applyFilters()">
+      <option value="">All Positions</option>
+      <option value="GK">GK — Goalkeeper</option>
+      <option value="DF">DF — Defender</option>
+      <option value="MF">MF — Midfielder</option>
+      <option value="FW">FW — Forward</option>
+    </select>
+    <button class="btn btn-ghost" onclick="clearFilters()">✕ Clear</button>
+    <button class="btn" onclick="load()" title="Refresh from server">↻ Refresh</button>
+    <span id="resultCount" style="font-size:12px;color:var(--text-dim);margin-left:auto"></span>
+  </div>
+
+  <!-- Table -->
+  <div class="table-card">
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th class="sortable sort-active" data-col="name" onclick="setSort('name')">Name <span class="sort-icon">▲</span></th>
+            <th class="sortable" data-col="team" onclick="setSort('team')">Team <span class="sort-icon">⇅</span></th>
+            <th class="sortable" data-col="nation" onclick="setSort('nation')">Nation <span class="sort-icon">⇅</span></th>
+            <th class="sortable" data-col="pos" onclick="setSort('pos')">Pos <span class="sort-icon">⇅</span></th>
+            <th class="sortable" data-col="age" onclick="setSort('age')">Age <span class="sort-icon">⇅</span></th>
+            <th class="sortable" data-col="mp" onclick="setSort('mp')">MP <span class="sort-icon">⇅</span></th>
+            <th class="sortable" data-col="starts" onclick="setSort('starts')">Starts <span class="sort-icon">⇅</span></th>
+            <th class="sortable" data-col="min" onclick="setSort('min')">Mins <span class="sort-icon">⇅</span></th>
+            <th class="sortable" data-col="gls" onclick="setSort('gls')">Gls <span class="sort-icon">⇅</span></th>
+            <th class="sortable" data-col="ast" onclick="setSort('ast')">Ast <span class="sort-icon">⇅</span></th>
+            <th class="sortable" data-col="xg" onclick="setSort('xg')">xG <span class="sort-icon">⇅</span></th>
+            <th class="sortable" data-col="xag" onclick="setSort('xag')">xAG <span class="sort-icon">⇅</span></th>
+            <th class="sortable" data-col="pk" onclick="setSort('pk')">PK <span class="sort-icon">⇅</span></th>
+            <th class="sortable" data-col="crdy" onclick="setSort('crdy')">YC <span class="sort-icon">⇅</span></th>
+            <th class="sortable" data-col="crdr" onclick="setSort('crdr')">RC <span class="sort-icon">⇅</span></th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          <tr><td colspan="16"><div class="loading-state"><div class="spinner"></div>Loading players…</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="table-footer">
+      <span id="footerLeft">—</span>
+      <span>PremierZone · localhost:8080</span>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">Add Player</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-section-title">Identity</div>
+
+      <div class="form-group full">
+        <label>Full Name *</label>
+        <input id="fName" type="text" placeholder="e.g. Mohamed Salah">
+      </div>
+      <div class="form-group">
+        <label>Team *</label>
+        <input id="fTeam" type="text" placeholder="e.g. Liverpool">
+      </div>
+      <div class="form-group">
+        <label>Nation</label>
+        <input id="fNation" type="text" placeholder="e.g. EGY">
+      </div>
+      <div class="form-group">
+        <label>Position</label>
+        <select id="fPos">
+          <option value="">— Select —</option>
+          <option value="GK">GK</option>
+          <option value="DF">DF</option>
+          <option value="CB">CB</option>
+          <option value="FB">FB</option>
+          <option value="MF">MF</option>
+          <option value="CM">CM</option>
+          <option value="DM">DM</option>
+          <option value="AM">AM</option>
+          <option value="WM">WM</option>
+          <option value="FW">FW</option>
+          <option value="LW">LW</option>
+          <option value="RW">RW</option>
+          <option value="ST">ST</option>
+          <option value="CF">CF</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Age</label>
+        <input id="fAge" type="number" min="15" max="45" placeholder="e.g. 31">
+      </div>
+
+      <div class="form-section-title">Appearances</div>
+
+      <div class="form-group">
+        <label>Matches Played</label>
+        <input id="fMp" type="number" min="0" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>Starts</label>
+        <input id="fStarts" type="number" min="0" placeholder="0">
+      </div>
+      <div class="form-group full">
+        <label>Minutes Played</label>
+        <input id="fMin" type="number" min="0" placeholder="0">
+      </div>
+
+      <div class="form-section-title">Attack</div>
+
+      <div class="form-group">
+        <label>Goals (Gls)</label>
+        <input id="fGls" type="number" step="0.1" min="0" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>Assists (Ast)</label>
+        <input id="fAst" type="number" step="0.1" min="0" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>Penalty Goals (PK)</label>
+        <input id="fPk" type="number" step="0.1" min="0" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>Expected Goals (xG)</label>
+        <input id="fXg" type="number" step="0.01" min="0" placeholder="0.00">
+      </div>
+      <div class="form-group">
+        <label>Expected Assists (xAG)</label>
+        <input id="fXag" type="number" step="0.01" min="0" placeholder="0.00">
+      </div>
+
+      <div class="form-section-title">Discipline</div>
+
+      <div class="form-group">
+        <label>Yellow Cards</label>
+        <input id="fCrdy" type="number" step="0.1" min="0" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>Red Cards</label>
+        <input id="fCrdr" type="number" step="0.1" min="0" placeholder="0">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="submitPlayer()">💾 Save Player</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Delete -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <h3>Delete Player</h3>
+    <p id="confirmMsg">Are you sure you want to remove this player from the database? This action cannot be undone.</p>
+    <div class="confirm-actions">
+      <button class="btn btn-ghost" onclick="closeConfirm()">Cancel</button>
+      <button class="btn btn-danger" id="confirmOkBtn">🗑 Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toasts -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+  const API = 'http://localhost:8080/api/v1/player';
+
+  let allPlayers = [];
+  let sortCol = 'name', sortAsc = true;
+  let editMode = false;
+  let debTimer = null;
+  let filters = { name: '', nation: '', team: '', pos: '' };
+  let deleteTarget = null;
+
+  /* ── Boot ── */
+  window.addEventListener('DOMContentLoaded', load);
+
+  async function load() {
+    setStatus('connecting');
+    showTableLoading();
+    try {
+      const r = await fetch(API);
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      allPlayers = await r.json();
+      setStatus('online');
+      populateTeamFilter();
+      renderTable();
+      updateStats();
+    } catch (e) {
+      setStatus('offline');
+      document.getElementById('tableBody').innerHTML =
+        `<tr><td colspan="16"><div class="empty-state">⚠️ Cannot reach backend at <code>localhost:8080</code><br><small>${e.message}</small></div></td></tr>`;
+      showToast('Cannot connect to backend: ' + e.message, 'error');
+    }
+  }
+
+  /* ── Status ── */
+  function setStatus(s) {
+    const dot = document.getElementById('statusDot');
+    const txt = document.getElementById('statusText');
+    if (s === 'online')       { dot.style.background = 'var(--epl-green)'; txt.textContent = 'Connected'; }
+    else if (s === 'offline') { dot.style.background = 'var(--red)';       txt.textContent = 'Offline'; }
+    else                      { dot.style.background = 'var(--yellow)';    txt.textContent = 'Connecting…'; }
+  }
+
+  /* ── Stats ── */
+  function updateStats() {
+    const visible = currentView();
+    document.getElementById('stTotal').textContent   = visible.length;
+    document.getElementById('stTeams').textContent   = new Set(visible.map(p => p.team).filter(Boolean)).size;
+    document.getElementById('stGoals').textContent   = visible.reduce((a,p) => a + (p.gls||0), 0).toFixed(1);
+    document.getElementById('stAssists').textContent = visible.reduce((a,p) => a + (p.ast||0), 0).toFixed(1);
+    document.getElementById('stNations').textContent = new Set(visible.map(p => p.nation).filter(Boolean)).size;
+    const top = visible.slice().sort((a,b) => (b.gls||0) - (a.gls||0))[0];
+    document.getElementById('stTopScorer').textContent = top ? top.name.split(' ').pop() + ' (' + (top.gls||0) + ')' : '—';
+  }
+
+  /* ── Team filter populate ── */
+  function populateTeamFilter() {
+    const sel = document.getElementById('filterTeam');
+    const cur = sel.value;
+    const teams = [...new Set(allPlayers.map(p => p.team).filter(Boolean))].sort();
+    sel.innerHTML = '<option value="">All Teams</option>' +
+      teams.map(t => `<option value="${t}"${t===cur?' selected':''}>${t}</option>`).join('');
+  }
+
+  /* ── Filtering ── */
+  function debounce(key, val) {
+    filters[key] = val;
+    clearTimeout(debTimer);
+    debTimer = setTimeout(() => { renderTable(); updateStats(); }, 250);
+  }
+
+  function applyFilters() {
+    filters.team = document.getElementById('filterTeam').value;
+    filters.pos  = document.getElementById('filterPos').value;
+    renderTable();
+    updateStats();
+  }
+
+  function clearFilters() {
+    filters = { name: '', nation: '', team: '', pos: '' };
+    document.getElementById('searchName').value   = '';
+    document.getElementById('searchNation').value = '';
+    document.getElementById('filterTeam').value   = '';
+    document.getElementById('filterPos').value    = '';
+    renderTable();
+    updateStats();
+  }
+
+  function currentView() {
+    const name   = filters.name.toLowerCase();
+    const nation = filters.nation.toLowerCase();
+    const team   = filters.team;
+    const pos    = filters.pos.toUpperCase();
+    return allPlayers.filter(p =>
+      (!name   || (p.name   || '').toLowerCase().includes(name)) &&
+      (!nation || (p.nation || '').toLowerCase().includes(nation)) &&
+      (!team   || p.team === team) &&
+      (!pos    || (p.pos   || '').toUpperCase().includes(pos))
+    );
+  }
+
+  /* ── Sort ── */
+  function setSort(col) {
+    if (sortCol === col) { sortAsc = !sortAsc; }
+    else { sortCol = col; sortAsc = true; }
+    document.querySelectorAll('th.sortable').forEach(th => {
+      const c = th.dataset.col;
+      th.classList.toggle('sort-active', c === sortCol);
+      th.querySelector('.sort-icon').textContent =
+        c === sortCol ? (sortAsc ? '▲' : '▼') : '⇅';
+    });
+    renderTable();
+  }
+
+  /* ── Render ── */
+  function showTableLoading() {
+    document.getElementById('tableBody').innerHTML =
+      '<tr><td colspan="16"><div class="loading-state"><div class="spinner"></div>Loading players…</div></td></tr>';
+  }
+
+  function renderTable() {
+    const players = currentView();
+    const sorted  = [...players].sort((a, b) => {
+      const va = a[sortCol] ?? '', vb = b[sortCol] ?? '';
+      if (typeof va === 'number' && typeof vb === 'number')
+        return sortAsc ? va - vb : vb - va;
+      const sa = String(va).toLowerCase(), sb = String(vb).toLowerCase();
+      return sortAsc ? sa.localeCompare(sb) : sb.localeCompare(sa);
+    });
+
+    document.getElementById('resultCount').textContent =
+      players.length !== allPlayers.length
+        ? `${players.length} of ${allPlayers.length} players`
+        : `${allPlayers.length} players`;
+    document.getElementById('footerLeft').textContent =
+      `Showing ${sorted.length} player${sorted.length !== 1 ? 's' : ''}`;
+
+    if (!sorted.length) {
+      document.getElementById('tableBody').innerHTML =
+        '<tr><td colspan="16"><div class="empty-state">No players match your filters.</div></td></tr>';
+      return;
+    }
+
+    document.getElementById('tableBody').innerHTML = sorted.map(p => {
+      const posKey = (p.pos || '').split(',')[0].trim().toUpperCase();
+      const posClass = ['GK','DF','CB','FB','MF','CM','DM','AM','WM','FW','LW','RW','ST','CF'].includes(posKey)
+        ? 'pos-' + posKey : 'pos-other';
+      const safeP = JSON.stringify(p).replace(/'/g, '&#39;').replace(/"/g, '&quot;');
+      return `<tr>
+        <td class="player-name">${esc(p.name)}</td>
+        <td style="color:var(--text-muted)">${esc(p.team||'')}</td>
+        <td style="color:var(--text-muted)">${esc(p.nation||'')}</td>
+        <td><span class="pos-badge ${posClass}">${esc(p.pos||'')}</span></td>
+        <td class="stat-num">${p.age ?? '—'}</td>
+        <td class="stat-num">${p.mp ?? '—'}</td>
+        <td class="stat-num">${p.starts ?? '—'}</td>
+        <td class="stat-num">${p.min != null ? Number(p.min).toFixed(0) : '—'}</td>
+        <td class="stat-green">${fmt(p.gls)}</td>
+        <td class="stat-pink">${fmt(p.ast)}</td>
+        <td class="stat-num">${fmt(p.xg)}</td>
+        <td class="stat-num">${fmt(p.xag)}</td>
+        <td class="stat-num">${fmt(p.pk)}</td>
+        <td class="stat-yellow">${fmt(p.crdy)}</td>
+        <td class="stat-red">${fmt(p.crdr)}</td>
+        <td>
+          <div class="action-cell">
+            <button class="icon-btn edit" title="Edit player" onclick='openEdit(${safeP})'>✏</button>
+            <button class="icon-btn del"  title="Delete player" onclick="confirmDelete('${esc(p.name)}')">⊘</button>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  function fmt(v) {
+    if (v == null) return '<span style="color:var(--text-dim)">—</span>';
+    const n = parseFloat(v);
+    return Number.isInteger(n) ? n : n.toFixed(1);
+  }
+
+  function esc(s) {
+    return String(s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  /* ── Modal ── */
+  function openAdd() {
+    editMode = false;
+    document.getElementById('modalTitle').textContent = 'Add Player';
+    const fields = ['Name','Team','Nation','Age','Mp','Starts','Min','Gls','Ast','Pk','Crdy','Crdr','Xg','Xag'];
+    fields.forEach(f => { document.getElementById('f'+f).value = ''; });
+    document.getElementById('fPos').value = '';
+    document.getElementById('fName').readOnly = false;
+    document.getElementById('modalOverlay').classList.add('open');
+    setTimeout(() => document.getElementById('fName').focus(), 50);
+  }
+
+  function openEdit(p) {
+    editMode = true;
+    document.getElementById('modalTitle').textContent = 'Edit Player';
+    document.getElementById('fName').value   = p.name   || '';
+    document.getElementById('fName').readOnly = true;
+    document.getElementById('fTeam').value   = p.team   || '';
+    document.getElementById('fNation').value = p.nation || '';
+    document.getElementById('fPos').value    = p.pos    || '';
+    document.getElementById('fAge').value    = p.age    || '';
+    document.getElementById('fMp').value     = p.mp     || '';
+    document.getElementById('fStarts').value = p.starts || '';
+    document.getElementById('fMin').value    = p.min    || '';
+    document.getElementById('fGls').value    = p.gls    || '';
+    document.getElementById('fAst').value    = p.ast    || '';
+    document.getElementById('fPk').value     = p.pk     || '';
+    document.getElementById('fCrdy').value   = p.crdy   || '';
+    document.getElementById('fCrdr').value   = p.crdr   || '';
+    document.getElementById('fXg').value     = p.xg     || '';
+    document.getElementById('fXag').value    = p.xag    || '';
+    document.getElementById('modalOverlay').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('open');
+    document.getElementById('fName').readOnly = false;
+  }
+
+  function getFormData() {
+    const n  = id => { const v = parseFloat(document.getElementById(id).value); return isNaN(v) ? null : v; };
+    const ni = id => { const v = parseInt(document.getElementById(id).value);   return isNaN(v) ? null : v; };
+    const s  = id => document.getElementById(id).value.trim() || null;
+    return {
+      name:   document.getElementById('fName').value.trim(),
+      team:   document.getElementById('fTeam').value.trim(),
+      nation: s('fNation'),
+      pos:    s('fPos'),
+      age:    ni('fAge'),
+      mp:     ni('fMp'),
+      starts: ni('fStarts'),
+      min:    n('fMin'),
+      gls:    n('fGls'),
+      ast:    n('fAst'),
+      pk:     n('fPk'),
+      crdy:   n('fCrdy'),
+      crdr:   n('fCrdr'),
+      xg:     n('fXg'),
+      xag:    n('fXag'),
+    };
+  }
+
+  async function submitPlayer() {
+    const data = getFormData();
+    if (!data.name) { showToast('Player name is required', 'error'); return; }
+    if (!data.team) { showToast('Team is required', 'error'); return; }
+    try {
+      const r = await fetch(API, {
+        method: editMode ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      showToast(editMode ? `${data.name} updated successfully` : `${data.name} added to squad`, 'success');
+      closeModal();
+      await load();
+    } catch (e) {
+      showToast('Save failed: ' + e.message, 'error');
+    }
+  }
+
+  /* ── Delete ── */
+  function confirmDelete(name) {
+    deleteTarget = name;
+    document.getElementById('confirmMsg').textContent =
+      `Remove "${name}" from the database? This action cannot be undone.`;
+    document.getElementById('confirmOkBtn').onclick = doDelete;
+    document.getElementById('confirmOverlay').classList.add('open');
+  }
+
+  function closeConfirm() {
+    document.getElementById('confirmOverlay').classList.remove('open');
+    deleteTarget = null;
+  }
+
+  async function doDelete() {
+    if (!deleteTarget) return;
+    try {
+      const r = await fetch(`${API}/${encodeURIComponent(deleteTarget)}`, { method: 'DELETE' });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      showToast(`${deleteTarget} removed from squad`, 'success');
+      closeConfirm();
+      await load();
+    } catch (e) {
+      showToast('Delete failed: ' + e.message, 'error');
+    }
+  }
+
+  /* ── Toast ── */
+  function showToast(msg, type = 'success') {
+    const container = document.getElementById('toastContainer');
+    const el = document.createElement('div');
+    el.className = `toast ${type}`;
+    el.innerHTML = `<span class="toast-icon">${type === 'success' ? '✓' : '✕'}</span><span>${msg}</span>`;
+    container.appendChild(el);
+    setTimeout(() => {
+      el.classList.add('hide');
+      setTimeout(() => el.remove(), 350);
+    }, 3000);
+  }
+
+  /* ── Keyboard shortcuts ── */
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      closeModal();
+      closeConfirm();
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+      e.preventDefault();
+      document.getElementById('searchName').focus();
+    }
+  });
+
+  /* ── Close modal on overlay click ── */
+  document.getElementById('modalOverlay').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeModal();
+  });
+  document.getElementById('confirmOverlay').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeConfirm();
+  });
+</script>
+</body>
+</html>
